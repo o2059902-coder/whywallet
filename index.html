@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://telegram.org https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src data: blob: https://encrypted-tbn0.gstatic.com https://upload.wikimedia.org https://thumb.wikimedia.org https://static.arkhamintelligence.com https://s3.coinmarketcap.com https://coin-images.coingecko.com; font-src data:; connect-src 'self' https://bsc-testnet-rpc.publicnode.com https://bsc-testnet.drpc.org https://ethereum-sepolia-rpc.publicnode.com https://sepolia.drpc.org https://mempool.space https://blockstream.info https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-mainnet.gateway.tatum.io https://rpc.mainnet.arc.io https://api.avax.network https://api.coingecko.com https://api.trongrid.io https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://base-rpc.publicnode.com https://base.drpc.org https://bsc-dataseed.bnbchain.org https://bsc-rpc.publicnode.com https://bsc.drpc.org https://cdn.jsdelivr.net https://eth.drpc.org https://eth.llamarpc.com https://ethereum-rpc.publicnode.com https://mainnet.base.org https://mainnet.optimism.io https://optimism-rpc.publicnode.com https://optimism.drpc.org https://polygon-bor-rpc.publicnode.com https://polygon-rpc.com https://polygon.drpc.org; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://telegram.org https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src data: blob: https://encrypted-tbn0.gstatic.com https://upload.wikimedia.org https://thumb.wikimedia.org https://static.arkhamintelligence.com https://s3.coinmarketcap.com https://coin-images.coingecko.com; font-src data:; connect-src 'self' https://mempool.space https://blockstream.info https://api.mainnet-beta.solana.com https://solana-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-mainnet.gateway.tatum.io https://rpc.mainnet.arc.io https://api.avax.network https://api.coingecko.com https://api.trongrid.io https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://base-rpc.publicnode.com https://base.drpc.org https://bsc-dataseed.bnbchain.org https://bsc-rpc.publicnode.com https://bsc.drpc.org https://cdn.jsdelivr.net https://eth.drpc.org https://eth.llamarpc.com https://ethereum-rpc.publicnode.com https://mainnet.base.org https://mainnet.optimism.io https://optimism-rpc.publicnode.com https://optimism.drpc.org https://polygon-bor-rpc.publicnode.com https://polygon-rpc.com https://polygon.drpc.org; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#07070d">
 <meta name="color-scheme" content="dark">
@@ -230,6 +230,9 @@
   }
   .coin-ic { overflow: hidden; }
   .coin-ic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cur-row { display: flex; gap: 8px; margin: 12px 0 2px; align-items: center; }
+  .cur-row .chip { padding: 6px 14px; font-size: 13px; }
+  #total { cursor: pointer; }
   .r-main { flex: 1; min-width: 0; }
   .r-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .r-sub { font-size: 12px; color: var(--hint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -444,6 +447,7 @@
         <div class="label">Общий баланс</div>
         <div class="total" id="total">$0.00</div>
         <div class="hint" id="total-hint"></div>
+        <div class="cur-row" id="cur-row"></div>
         <div class="actions">
           <button class="act" data-tab="receive"><i data-ic="receive"></i><span>Получить</span></button>
           <button class="act" data-tab="send"><i data-ic="send"></i><span>Отправить</span></button>
@@ -530,7 +534,7 @@
   // открывает вкладку «Админ». Настоящая защита выпуска монет в смарт-контракте:
   // выпускать может только тот, кто монету создал.
   const ADMIN_ADDRESSES = [
-    "0x9982A773F438DCe942fa6190e702b4020db321E2",
+    "0xf1a8d87fc58Fd851AcdD74a1be1fF4c8AF030F4C",
   ];
 
   const TRON_API = "https://api.trongrid.io";
@@ -540,7 +544,7 @@
     "https://cdn.jsdelivr.net/npm/@openzeppelin/contracts@4.9.6/build/contracts/ERC20PresetMinterPauser.json";
   // SHA-256 файла выше (из data.jsdelivr.com). Если файл подменят, создание монеты остановится.
   const TOKEN_ARTIFACT_SHA256 = "vnA7edsqSfSO0a6MfvBuOjJxOLZWpqje3cZBCMpA/10=";
-  const PRICE_URL = "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&ids=";
+  const PRICE_URL = "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd,rub,byn&ids=";
 
   // Запрещённые названия: защита от монет-подделок
   const RESERVED = ["USDT","USDC","USDD","USDE","DAI","BUSD","TUSD","FDUSD","PYUSD","BTC","WBTC","ETH","WETH",
@@ -564,12 +568,6 @@
     { id: "bitcoin", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/250px-Bitcoin.svg.png", type: "btc", name: "Bitcoin", symbol: "BTC", cg: "bitcoin", icon: "₿", color: "#f7931a",
       explorer: "https://mempool.space",
       apis: ["https://mempool.space/api", "https://blockstream.info/api"] },
-    { id: "bsctest", type: "evm", name: "BNB Testnet", symbol: "tBNB", chainId: 97, cg: null, icon: "tB", color: "#6b7280", test: true,
-      explorer: "https://testnet.bscscan.com",
-      rpcs: ["https://bsc-testnet-rpc.publicnode.com", "https://bsc-testnet.drpc.org"] },
-    { id: "sepolia", type: "evm", name: "Sepolia", symbol: "SepETH", chainId: 11155111, cg: null, icon: "Se", color: "#6b7280", test: true,
-      explorer: "https://sepolia.etherscan.io",
-      rpcs: ["https://ethereum-sepolia-rpc.publicnode.com", "https://sepolia.drpc.org"] },
   ];
 
   const SEL_KEY = "ww_sel_net", ADMIN_NET_KEY = "ww_admin_net", TOKENS_KEY = "wallet_tokens_v2", NAMES_KEY = "ww_names";
@@ -659,8 +657,20 @@
     if (n < 0.00001) return "<0.00001";
     return n.toLocaleString("ru-RU", { maximumFractionDigits: n < 1 ? 5 : 4 });
   }
+  // Валюта отображения: USD / BYN / RUB (курс считается из CoinGecko)
+  const CUR_KEY = "ww_cur", HIDE_KEY = "ww_hide", FX_KEY = "ww_fx";
+  const CURS = { usd: { sym: "$", loc: "en-US", after: false }, byn: { sym: "Br", loc: "ru-RU", after: true }, rub: { sym: "₽", loc: "ru-RU", after: true } };
+  let cur = localStorage.getItem(CUR_KEY); if (!CURS[cur]) cur = "usd";
+  let hideBal = localStorage.getItem(HIDE_KEY) === "1";
+  let fx = { usd: 1, byn: 0, rub: 0 };
+  try { const f = JSON.parse(localStorage.getItem(FX_KEY) || "null"); if (f && f.byn > 0 && f.rub > 0) fx = { usd: 1, byn: f.byn, rub: f.rub }; } catch {}
   function fmtUsd(n) {
-    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (hideBal) return "••••••";
+    const rate = fx[cur] || (cur === "usd" ? 1 : 0);
+    if (!rate) return "…";
+    const c = CURS[cur];
+    const s = (n * rate).toLocaleString(c.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return c.after ? s + " " + c.sym : c.sym + s;
   }
   function haptic(type) { try { if (inTelegram && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(type); } catch {} }
   function tick() { try { if (inTelegram && tg.HapticFeedback) tg.HapticFeedback.selectionChanged(); } catch {} }
@@ -1383,7 +1393,7 @@
     if (Math.abs(sum - lastTotal) > 0.004) animateTotal(sum);
     $("total-hint").textContent =
       pricesState === "fail" ? "Не удалось загрузить курсы, нажми «Обновить»" :
-      loading ? "Считаю по всем сетям…" : "По всем сетям в долларах · свои токены не учитываются";
+      loading ? "Считаю по всем сетям…" : "По всем сетям · свои токены не учитываются";
   }
 
   // =====================================================================
@@ -1431,6 +1441,11 @@
       if (s !== session) return;
       prices = {};
       for (const k in data) prices[k] = data[k].usd;
+      const ref = data.bitcoin || data.ethereum;
+      if (ref && ref.usd > 0 && ref.rub > 0 && ref.byn > 0) {
+        fx = { usd: 1, byn: ref.byn / ref.usd, rub: ref.rub / ref.usd };
+        try { localStorage.setItem(FX_KEY, JSON.stringify(fx)); } catch {}
+      }
       pricesState = "ok";
     } catch { if (s === session) pricesState = "fail"; }
     if (s !== session) return;
@@ -1894,6 +1909,23 @@
     const a = document.activeElement;
     if (isField(a) && !isField(e.target) && !e.target.closest("button, label")) a.blur();
   });
+
+  // Выбор валюты и скрытие баланса (тап по сумме)
+  function refreshMoney() { lastTotal = -1; updateAssetValues(); updateTokenValues(); updateTotal(); if (curTab === "send") try { renderSend(); } catch {} }
+  function buildCurRow() {
+    const row = $("cur-row"); row.innerHTML = "";
+    ["usd", "byn", "rub"].forEach(k => {
+      const b = el("button", "chip" + (k === cur ? " on" : ""), k.toUpperCase());
+      b.onclick = () => { tick(); cur = k; localStorage.setItem(CUR_KEY, k); buildCurRow(); refreshMoney(); };
+      row.appendChild(b);
+    });
+    const eye = el("button", "chip", hideBal ? "Показать" : "Скрыть");
+    eye.style.marginLeft = "auto";
+    eye.onclick = () => { tick(); hideBal = !hideBal; localStorage.setItem(HIDE_KEY, hideBal ? "1" : "0"); buildCurRow(); refreshMoney(); };
+    row.appendChild(eye);
+  }
+  buildCurRow();
+  $("total").onclick = () => { hideBal = !hideBal; localStorage.setItem(HIDE_KEY, hideBal ? "1" : "0"); buildCurRow(); refreshMoney(); };
 
   // =====================================================================
   //                                СТАРТ
